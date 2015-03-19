@@ -1,0 +1,8 @@
+pdf:
+  image: unocha/wkhtmltopdf-nodejs
+  volumes:
+    - /code/hid_wkhtmltopdf:/opt/service
+  environment:
+    DNSDOCK_NAME: pdf
+    DNSDOCK_IMAGE: contactsid
+    NODE_ENV: dockerdev
