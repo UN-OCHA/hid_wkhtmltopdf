@@ -30,7 +30,7 @@ var express = require('express'),
   app = express();
 
 app.set('env', process.env.NODE_ENV || 'dockerdev');
-app.set('port', process.env.PORT || 5100);
+app.set('port', process.env.PORT || 80);
 
 app.use(express.bodyParser({uploadDir: '/tmp'}));
 
