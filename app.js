@@ -101,8 +101,8 @@ app.post('/htmltopdf', function (req, res) {
       child = exec(cmd,
         function (error, stdout, stderr) {
           if (error !== null) {
-            log.error({"cmd": cmd, "stdout": stdout, "stderr": stderr, "error": error}, "An error occurred while trying to covert the HTML upload to a PDF.");
-            return cb(new Error("An error occurred while trying to covert the HTML upload to a PDF."));
+            log.error({"cmd": cmd, "stdout": stdout, "stderr": stderr, "error": error}, "An error occurred while trying to convert the HTML upload to a PDF.");
+            return cb(new Error("An error occurred while trying to convert the HTML upload to a PDF."));
           }
           return cb();
         });
