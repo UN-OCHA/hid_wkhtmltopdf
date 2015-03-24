@@ -16,7 +16,8 @@
 var config = require('./config'),
   log = require('./log'),
   fs = require('fs'),
-  async = require('async');
+  async = require('async'),
+  exec = require('child_process').exec;
 
 // Set http and https default maxSockets to Infinity to avoid artificial
 // constraints in Node < 0.12.
@@ -92,11 +93,9 @@ app.post('/htmltopdf', function (req, res) {
     },
     function (cb) {
       // Process HTML file with wkhtmltopdf
-      var exec = require('child_process').exec,
-        child,
+      var child,
         cmd = 'wkhtmltopdf -O landscape ' + fnHtml + ' ' + fnPdf;
 
-      console.log('running ' + cmd);
       log.info({"msg": "Running wkhtmltopdf", "cmd": cmd});
       child = exec(cmd,
         function (error, stdout, stderr) {
@@ -113,15 +112,40 @@ app.post('/htmltopdf', function (req, res) {
       res.contentType('application/pdf');
       res.sendfile(fnPdf, function () {
         res.end();
-        log.info("PDF " + fnPdf + " successfully generated for HTML " + fnHtml + " in " + ((Date.now() - startTime)/1000) + " seconds.");
+        var duration = ((Date.now() - startTime)/1000);
+        log.info({"duration": duration}, "PDF " + fnPdf + " successfully generated for HTML " + fnHtml + " in " + duration + " seconds.");
         return cb();
       });
     }
   ], function (err, results) {
     if (err) {
-      log.warn("PDF generation failed for HTML " + fnHtml + " in " + (Date.now() - startTime)/1000 + " seconds.");
+      var duration = ((Date.now() - startTime)/1000);
+      log.warn({"duration": duration}, "PDF generation failed for HTML " + fnHtml + " in " + duration + " seconds.");
       res.send(500, "Error");
     }
+
+    // Remove the input and output files
+    async.parallel([
+      function (cb) {
+        if (fnHtml.length) {
+          return fs.unlink(fnHtml, cb);
+        }
+        return cb();
+      },
+      function (cb) {
+        if (fnPdf.length) {
+          return fs.unlink(fnPdf, cb);
+        }
+        return cb();
+      }
+    ], function (err, results) {
+      if (err) {
+        log.error({"err": err}, "An error occurred while trying to remove the input (" + fnHtml + ") and output (" + fnPdf + ") files.");
+      }
+      else {
+        log.info("Successfully removed input (" + fnHtml + ") and output (" + fnPdf + ") files.");
+      }
+    });
   });
 });
 
