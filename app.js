@@ -96,7 +96,6 @@ app.post('/htmltopdf', function (req, res) {
       var child,
         cmd = 'wkhtmltopdf -O landscape ' + fnHtml + ' ' + fnPdf;
 
-      log.info({"msg": "Running wkhtmltopdf", "cmd": cmd});
       child = exec(cmd,
         function (error, stdout, stderr) {
           if (error !== null) {
