@@ -33,7 +33,10 @@ var express = require('express'),
 app.set('env', process.env.NODE_ENV || 'dockerdev');
 app.set('port', process.env.PORT || 80);
 
-app.use(express.bodyParser({uploadDir: '/tmp'}));
+app.use(express.bodyParser({
+  limit: '10mb',
+  uploadDir: '/tmp'
+}));
 
 app.use(express.methodOverride());
 
