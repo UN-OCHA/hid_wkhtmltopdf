@@ -45,18 +45,13 @@ app.use(function(err, req, res, next) {
     log.error('Error: ' + JSON.stringify(err));
   }
 
-  if (middleware.isValidationError(err)) {
-    res.status(400);
-    res.send(err.errors);
-  }
-  else {
-    res.status(err.code || 500);
-    res.send('Error');
-  }
+  res.status(err.code || 500);
+  res.send('Error');
 });
 
 app.post('/htmltopdf', function (req, res) {
   var fnHtml = '',
+    sizeHtml = 0,
     fnPdf = '',
     startTime = Date.now();
 
@@ -71,6 +66,7 @@ app.post('/htmltopdf', function (req, res) {
           }
           else {
             fnHtml = req.files.html.path;
+            sizeHtml = stats.size || 0;
             fnPdf = fnHtml + '.pdf';
             return cb();
           }
@@ -78,6 +74,7 @@ app.post('/htmltopdf', function (req, res) {
       }
       else if (req.body && req.body.html && req.body.html.length) {
         fnHtml = '/tmp/htmltopdf-' + Date.now() + '.html';
+        sizeHtml = req.body.html.length;
         fs.writeFile(fnHtml, req.body.html, function (err) {
           if (err) {
             log.error({"body": req.body}, "An error occurred while trying to validate the HTML post data.");
@@ -102,7 +99,7 @@ app.post('/htmltopdf', function (req, res) {
       child = exec(cmd,
         function (error, stdout, stderr) {
           if (error !== null) {
-            log.error({"cmd": cmd, "stdout": stdout, "stderr": stderr, "error": error}, "An error occurred while trying to convert the HTML upload to a PDF.");
+            log.error({"cmd": cmd, "stdout": stdout, "stderr": stderr, "error": error, "inputSize": sizeHtml}, "An error occurred while trying to convert the HTML upload to a PDF.");
             return cb(new Error("An error occurred while trying to convert the HTML upload to a PDF."));
           }
           return cb();
@@ -115,14 +112,14 @@ app.post('/htmltopdf', function (req, res) {
       res.sendfile(fnPdf, function () {
         res.end();
         var duration = ((Date.now() - startTime)/1000);
-        log.info({"duration": duration}, "PDF " + fnPdf + " successfully generated for HTML " + fnHtml + " in " + duration + " seconds.");
+        log.info({"duration": duration, "inputSize": sizeHtml}, "PDF " + fnPdf + " successfully generated for HTML " + fnHtml + " in " + duration + " seconds.");
         return cb();
       });
     }
   ], function (err, results) {
     if (err) {
       var duration = ((Date.now() - startTime)/1000);
-      log.warn({"duration": duration}, "PDF generation failed for HTML " + fnHtml + " in " + duration + " seconds.");
+      log.warn({"duration": duration, "inputSize": sizeHtml}, "PDF generation failed for HTML " + fnHtml + " in " + duration + " seconds.");
       res.send(500, "Error");
     }
 
