@@ -52,6 +52,7 @@ app.use(function(err, req, res, next) {
 app.post('/htmltopdf', function (req, res) {
   var fnHtml = '',
     sizeHtml = 0,
+    fnParams = '',
     fnPdf = '',
     startTime = Date.now();
 
@@ -86,15 +87,33 @@ app.post('/htmltopdf', function (req, res) {
           }
         });
       }
+      else if (req.query && req.query.url && req.query.url.length) {
+        fnHtml = req.query.url;
+        fnPdf = '/tmp/htmltopdf-' + Date.now() + '.pdf';
+        return cb();
+      }
       else {
         log.error("An HTML file was not uploaded or could not be accessed.");
         return cb(new Error("An HTML file was not uploaded or could not be accessed."));
       }
     },
     function (cb) {
+      // Check for parameters to wkhtmltopdf
+      if (req.query && req.query.params) {
+        for (var key in req.query.params) {
+          fnParams += '--' + key + ' ';
+          if (req.query.params[key] != 'true') {
+            fnParams += '"' + req.query.params[key] + '" ';
+          }
+        }
+        log.info(fnParams);
+      }
+      return cb();
+    },
+    function (cb) {
       // Process HTML file with wkhtmltopdf
       var child,
-        cmd = 'wkhtmltopdf -O landscape ' + fnHtml + ' ' + fnPdf;
+        cmd = 'wkhtmltopdf -O landscape ' + fnParams + fnHtml + ' ' + fnPdf;
 
       child = exec(cmd,
         function (error, stdout, stderr) {
