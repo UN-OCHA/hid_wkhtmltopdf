@@ -16,6 +16,7 @@
 var config = require('./config'),
   log = require('./log'),
   fs = require('fs'),
+  crypto = require('crypto'),
   async = require('async'),
   exec = require('child_process').exec;
 
@@ -54,6 +55,7 @@ app.post('/htmltopdf', function (req, res) {
     sizeHtml = 0,
     fnParams = '',
     fnPdf = '',
+    fnUrl = false,
     startTime = Date.now();
 
   async.series([
@@ -87,9 +89,12 @@ app.post('/htmltopdf', function (req, res) {
           }
         });
       }
-      else if (req.query && req.query.url && req.query.url.length) {
+      else if (req.query && req.query.url && req.query.url.length && (req.query.url.substr(0, 7) == 'http://' || req.query.url.substr(0, 8) == 'https://')) {
         fnHtml = req.query.url;
-        fnPdf = '/tmp/htmltopdf-' + Date.now() + '.pdf';
+        var md5sum = crypto.createHash('md5');
+        md5sum.update(fnHtml);
+        fnPdf = '/tmp/htmltopdf-' + md5sum.digest('hex') + '-' + Date.now() + '.pdf';
+        fnUrl = true;
         return cb();
       }
       else {
@@ -145,7 +150,7 @@ app.post('/htmltopdf', function (req, res) {
     // Remove the input and output files
     async.parallel([
       function (cb) {
-        if (fnHtml.length) {
+        if (fnHtml.length && fnUrl == false) {
           return fs.unlink(fnHtml, cb);
         }
         return cb();
