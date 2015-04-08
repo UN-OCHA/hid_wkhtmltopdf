@@ -16,6 +16,7 @@
 var config = require('./config'),
   log = require('./log'),
   fs = require('fs'),
+  crypto = require('crypto'),
   async = require('async'),
   exec = require('child_process').exec;
 
@@ -52,7 +53,9 @@ app.use(function(err, req, res, next) {
 app.post('/htmltopdf', function (req, res) {
   var fnHtml = '',
     sizeHtml = 0,
+    fnParams = '',
     fnPdf = '',
+    fnUrl = false,
     startTime = Date.now();
 
   async.series([
@@ -86,15 +89,36 @@ app.post('/htmltopdf', function (req, res) {
           }
         });
       }
+      else if (req.query && req.query.url && req.query.url.length && (req.query.url.substr(0, 7) == 'http://' || req.query.url.substr(0, 8) == 'https://')) {
+        fnHtml = req.query.url;
+        var md5sum = crypto.createHash('md5');
+        md5sum.update(fnHtml);
+        fnPdf = '/tmp/htmltopdf-' + md5sum.digest('hex') + '-' + Date.now() + '.pdf';
+        fnUrl = true;
+        return cb();
+      }
       else {
         log.error("An HTML file was not uploaded or could not be accessed.");
         return cb(new Error("An HTML file was not uploaded or could not be accessed."));
       }
     },
     function (cb) {
+      // Check for parameters to wkhtmltopdf
+      if (req.query && req.query.params) {
+        for (var key in req.query.params) {
+          fnParams += '--' + key + ' ';
+          if (req.query.params[key] != 'true') {
+            fnParams += '"' + req.query.params[key] + '" ';
+          }
+        }
+        log.info(fnParams);
+      }
+      return cb();
+    },
+    function (cb) {
       // Process HTML file with wkhtmltopdf
       var child,
-        cmd = 'wkhtmltopdf -O landscape ' + fnHtml + ' ' + fnPdf;
+        cmd = 'wkhtmltopdf -O landscape ' + fnParams + fnHtml + ' ' + fnPdf;
 
       child = exec(cmd,
         function (error, stdout, stderr) {
@@ -126,7 +150,7 @@ app.post('/htmltopdf', function (req, res) {
     // Remove the input and output files
     async.parallel([
       function (cb) {
-        if (fnHtml.length) {
+        if (fnHtml.length && fnUrl == false) {
           return fs.unlink(fnHtml, cb);
         }
         return cb();
