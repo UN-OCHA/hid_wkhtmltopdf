@@ -118,7 +118,7 @@ app.post('/htmltopdf', function (req, res) {
     function (cb) {
       // Process HTML file with wkhtmltopdf
       var child,
-        cmd = 'wkhtmltopdf -O landscape ' + fnParams + fnHtml + ' ' + fnPdf;
+        cmd = 'wkhtmltopdf -O landscape ' + fnParams + '"' + fnHtml + '"' + ' ' + fnPdf;
 
       child = exec(cmd,
         function (error, stdout, stderr) {
