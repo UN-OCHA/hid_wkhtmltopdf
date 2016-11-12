@@ -1,7 +1,7 @@
 pdf:
-  image: unocha/wkhtmltopdf-nodejs
+  image: unocha/alpine-wkhtmltopdf
   volumes:
-    - /code/hid_wkhtmltopdf:/opt/service
+    - .:/srv/www
   environment:
     DNSDOCK_NAME: pdf
     DNSDOCK_IMAGE: contactsid
