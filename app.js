@@ -125,6 +125,8 @@ app.post('/htmltopdf', function (req, res) {
           if (error !== null) {
             log.error({"cmd": cmd, "stdout": stdout, "stderr": stderr, "error": error, "inputSize": sizeHtml}, "An error occurred while trying to convert the HTML upload to a PDF.");
             return cb(new Error("An error occurred while trying to convert the HTML upload to a PDF."));
+          } else {
+            log.info({"cmd": cmd, "stdout": stdout, "stderr": stderr, "error": error, "inputSize": sizeHtml}, "Generated a PDF file.");
           }
           return cb();
         });
